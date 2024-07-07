@@ -25,10 +25,14 @@ class Rocket {
 
 public:
   Rocket(TimeSource &timeSource)
-      : timeSource(timeSource),
+      : timeSource(timeSource)
+#ifndef NDEBUG
+        ,
         callbacks{reinterpret_cast<void (*)(void *, int)>(setPaused),
                   reinterpret_cast<void (*)(void *, int)>(setRow),
-                  reinterpret_cast<int (*)(void *)>(isPlaying)} {
+                  reinterpret_cast<int (*)(void *)>(isPlaying)}
+#endif
+  {
     rocket = sync_create_device("Rocket");
 #ifndef NDEBUG
     if (sync_tcp_connect(rocket, "localhost", SYNC_DEFAULT_PORT) < 0) {
@@ -47,6 +51,7 @@ public:
   }
 
 private:
+#ifndef NDEBUG
   static void setPaused(Rocket *rocket, int paused) {
     rocket->timeSource.setPaused(paused);
   }
@@ -58,6 +63,7 @@ private:
   static int isPlaying(Rocket *rocket) {
     return !rocket->timeSource.isPaused();
   }
+#endif
 
   TimeSource &timeSource;
   sync_device *rocket;

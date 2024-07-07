@@ -7,8 +7,8 @@
 #include <raylib-cpp.hpp>
 
 #include "Constants.h"
-#include "EmbeddedShader.h"
 #include "Scene.h"
+#include "ShaderWrapper.h"
 #include "TimeSource.h"
 
 INCBIN(ridges_fs, "../src/scenes/Ridges.fs");
@@ -17,11 +17,17 @@ class Ridges : public Scene {
 public:
   Ridges(const TimeSource &timeSource)
       : timeSource(timeSource),
-        shader(EmbeddedShader::fromIncbinData(gridges_fsData, gridges_fsSize)),
-        locResolution(shader.GetLocation("resolution")),
-        locTime(shader.GetLocation("time")){};
+#ifdef NDEBUG
+        shaderWrapper(gridges_fsData, gridges_fsSize),
+#else
+        shaderWrapper("../src/scenes/Ridges.fs"),
+#endif
+        locResolution(shaderWrapper.getShader().GetLocation("resolution")),
+        locTime(shaderWrapper.getShader().GetLocation("time")){};
 
   void render() override {
+    auto &shader = shaderWrapper.getShader();
+
     const float resolution[] = {RENDER_WIDTH, RENDER_HEIGHT};
     shader.SetValue(locResolution, &resolution, SHADER_UNIFORM_VEC2);
     const float time = timeSource.now();
@@ -29,13 +35,12 @@ public:
 
     shader.BeginMode();
     DrawRectangle(0, 0, RENDER_WIDTH, RENDER_HEIGHT, WHITE);
-    DrawLine(0, 0, RENDER_WIDTH / 2, RENDER_HEIGHT / 2, BLUE);
     shader.EndMode();
   }
 
 private:
   const TimeSource &timeSource;
-  raylib::Shader shader;
+  ShaderWrapper shaderWrapper;
   int locResolution;
   int locTime;
 };

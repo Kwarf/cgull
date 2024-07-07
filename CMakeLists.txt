@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.24)
 
 project(cgull)
 
@@ -48,7 +48,7 @@ set(rocket_SOURCES
 	"${rocket_SOURCE_DIR}/lib/track.c")
 
 add_executable(${PROJECT_NAME})
-target_sources(${PROJECT_NAME} PRIVATE src/main.cpp ${rocket_SOURCES})
+target_sources(${PROJECT_NAME} PRIVATE src/main.cpp $<$<PLATFORM_ID:Windows>:data.c> ${rocket_SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE
 	"${CMAKE_CURRENT_LIST_DIR}/src"
 	"${incbin_SOURCE_DIR}"
@@ -57,3 +57,11 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 	"${rocket_SOURCE_DIR}/lib"
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE raylib)
+target_compile_definitions(${PROJECT_NAME} PRIVATE $<$<CONFIG:Release>:SYNC_PLAYER>)
+
+# Build the incbin binary needed for embedding with MSVC
+if(WIN32)
+	add_executable(incbin-bin ${incbin_SOURCE_DIR}/incbin.c)
+	add_dependencies(${PROJECT_NAME} incbin-bin)
+	add_custom_command(OUTPUT data.c COMMAND $<TARGET_FILE:incbin-bin> ${CMAKE_SOURCE_DIR}/src/scenes/Ridges.h)
+endif()

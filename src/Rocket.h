@@ -43,7 +43,9 @@ public:
   ~Rocket() { sync_destroy_device(rocket); }
 
   void update() {
+#ifndef NDEBUG
     sync_update(rocket, timeSource.now() * SYNC_ROW_RATE, &callbacks, this);
+#endif
   }
 
   Track track(const std::string &name) {
@@ -67,5 +69,7 @@ private:
 
   TimeSource &timeSource;
   sync_device *rocket;
+#ifndef NDEBUG
   sync_cb callbacks;
+#endif
 };

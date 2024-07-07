@@ -1,0 +1,34 @@
+name: CMake Build
+
+on: push
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        type: [debug, release]
+        os: [macos-latest, ubuntu-latest]
+        exclude:
+          - os: ubuntu-latest # TODO: Requires inotify support in FileWatcher.h
+            type: debug
+        include:
+          - os: windows-latest
+            type: windows-release
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: seanmiddleditch/gha-setup-ninja@master
+      - name: Install dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt update && sudo apt install libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev
+      - name: Configure CMake
+        run: cmake --preset ${{ matrix.os == 'windows-latest' && 'windows' || 'default' }}
+      - name: Build
+        run: cmake --build --preset ${{ matrix.type }}
+      - name: Save artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.os }}-${{ matrix.type }}
+          path: build/${{ matrix.type == 'debug' && 'Debug' || 'Release' }}/cgull*
+          if-no-files-found: error

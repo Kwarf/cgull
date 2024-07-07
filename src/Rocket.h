@@ -11,9 +11,15 @@
 class Rocket {
   class Track {
   public:
-    Track(const sync_track *track) : track(track) {}
+    Track(const TimeSource &timeSource, const sync_track *track)
+        : timeSource(timeSource), track(track) {}
+
+    double value() const {
+      return sync_get_val(track, timeSource.now() * SYNC_ROW_RATE);
+    }
 
   private:
+    const TimeSource &timeSource;
     const sync_track *track;
   };
 
@@ -37,7 +43,7 @@ public:
   }
 
   Track track(const std::string &name) {
-    return Track(sync_get_track(rocket, name.c_str()));
+    return Track(timeSource, sync_get_track(rocket, name.c_str()));
   }
 
 private:

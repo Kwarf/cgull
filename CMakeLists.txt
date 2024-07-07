@@ -38,6 +38,9 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(incbin raylib raylib-cpp rocket)
 
+# Since I modify glfwSetTime I need to disable raylib frame time control
+target_compile_definitions(raylib PRIVATE SUPPORT_CUSTOM_FRAME_CONTROL=1)
+
 # I will literally go insane if I have to fight with MSVC/vcxproj any more, just add the sources directly
 set(rocket_SOURCES
 	"${rocket_SOURCE_DIR}/lib/device.c"

@@ -1,0 +1,56 @@
+cmake_minimum_required(VERSION 3.12)
+
+project(cgull)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+
+include(FetchContent)
+
+FetchContent_Declare(
+	incbin
+	GIT_REPOSITORY "https://github.com/graphitemaster/incbin.git"
+	GIT_TAG "main"
+	GIT_SHALLOW TRUE
+)
+
+FetchContent_Declare(
+	raylib
+	URL "https://github.com/raysan5/raylib/archive/refs/tags/5.0.zip"
+	URL_HASH SHA256=701f92f0646fbf1cec5ecc3bbc9d27d6511a3c9163c1ef8a679b15474ce854f5
+	DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+
+FetchContent_Declare(
+	raylib-cpp
+	URL "https://github.com/RobLoach/raylib-cpp/archive/refs/tags/v5.0.2.zip"
+	URL_HASH SHA256=754cbf61a3b67867fa0db83069daafc39157a2cfdf17661acddac6cf372c546e
+	DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+
+FetchContent_Declare(
+	rocket
+	GIT_REPOSITORY "https://github.com/rocket/rocket.git"
+	GIT_TAG "59be1f138c983a7b88bd94cc049db32431ed1ba2"
+	GIT_SHALLOW TRUE
+)
+
+FetchContent_MakeAvailable(incbin raylib raylib-cpp rocket)
+
+# I will literally go insane if I have to fight with MSVC/vcxproj any more, just add the sources directly
+set(rocket_SOURCES
+	"${rocket_SOURCE_DIR}/lib/device.c"
+	"${rocket_SOURCE_DIR}/lib/tcp.c"
+	"${rocket_SOURCE_DIR}/lib/track.c")
+
+add_executable(${PROJECT_NAME})
+target_sources(${PROJECT_NAME} PRIVATE src/main.cpp ${rocket_SOURCES})
+target_include_directories(${PROJECT_NAME} PRIVATE
+	"${CMAKE_CURRENT_LIST_DIR}/src"
+	"${incbin_SOURCE_DIR}"
+	"${raylib_BINARY_DIR}/raylib/include"
+	"${raylib-cpp_SOURCE_DIR}/include"
+	"${rocket_SOURCE_DIR}/lib"
+)
+target_link_libraries(${PROJECT_NAME} PRIVATE raylib)

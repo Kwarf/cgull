@@ -97,5 +97,5 @@ vec2 normalizeScreenCoords(vec2 screenCoord) {
 void main() {
     vec2 uv = normalizeScreenCoords(gl_FragCoord.xy);
     vec3 rayDirection = getCameraRayDir(uv, cameraPosition, cameraTarget);
-    color = vec4(render(cameraPosition, rayDirection), 1);
+    color = pow(vec4(render(cameraPosition, rayDirection), 1), vec4(0.4545));
 }

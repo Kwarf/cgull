@@ -12,16 +12,16 @@
 #include "ShaderWrapper.h"
 #include "TimeSource.h"
 
-INCBIN(ridges_fs, "../src/scenes/Ridges.fs");
+INCBIN(city_fs, "../src/scenes/City.fs");
 
-class Ridges : public Scene {
+class City : public Scene {
 public:
-    Ridges(const TimeSource &timeSource, const Rocket &rocket)
+    City(const TimeSource &timeSource, const Rocket &rocket)
         : timeSource(timeSource), rocket(rocket),
 #ifdef NDEBUG
-          shaderWrapper(gridges_fsData, gridges_fsSize),
+          shaderWrapper(gcity_fsData, gcity_fsSize),
 #else
-          shaderWrapper("../../src/scenes/Ridges.fs"),
+          shaderWrapper("../../src/scenes/City.fs"),
 #endif
           locResolution(shaderWrapper.getShader().GetLocation("resolution")),
           locTime(shaderWrapper.getShader().GetLocation("time")),

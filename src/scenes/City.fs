@@ -807,30 +807,68 @@ vec2 mUnion(vec2 a, vec2 b) {
     return (a.x < b.x) ? a : b;
 }
 
-vec2 SDF(vec3 pos) {
-    // float d = fTorus(pos, 1, 4.0);
-    // Base box
-    float d = fBox(pos, vec3(10, 2, 10));
-    d = max(d, -fBox(pos + vec3(0, -1, 0), vec3(9, 2, 9)));
+float sdRoundCone(vec3 p, float r1, float r2, float h) {
+  // sampling independent computations (only depend on shape)
+    float b = (r1 - r2) / h;
+    float a = sqrt(1.0 - b * b);
 
-    // Columns
-    vec3 repeatedPosition = pos;
-    pModPolar(repeatedPosition.xz, 6);
-    d = min(d, fBox(repeatedPosition - vec3(3, 0, 0), vec3(0.5, 2, 0.5)));
+  // sampling dependant computations
+    vec2 q = vec2(length(p.xz), p.y);
+    float k = dot(q, vec2(-b, a));
+    if(k < 0.0)
+        return length(q) - r1;
+    if(k > a * h)
+        return length(q - vec2(0.0, h)) - r2;
+    return dot(q, vec2(a, b)) - r1;
+}
+
+vec2 seagull(vec3 pos) {
+    // Body
+    vec3 p = pos + vec3(0, 0, -0.5);
+    pR(p.yz, -radians(90));
+    float d = sdRoundCone(p, 0.4, 0.3, 1);
+    d = min(d, sdRoundCone(p + vec3(0, 0.5, 0), 0.2, 0.4, 0.5));
+    vec2 result = vec2(d, 1.0);
+    // Tail
+    pR(p.yz, radians(5));
+    result = mUnion(result, vec2(sdRoundCone(p + vec3(0, -1, 0.1), 0.28, 0.1, 1), 2.0));
+    // Beak
+    result = mUnion(result, vec2(fBox(pos + vec3(0, 0, -1.25), vec3(0.05, 0.08, 0.2)), 3.0));
+
+    // Wings, mirrored along the x axis, flapping
+    float flap = sin(time * 3);
+    pMirror(pos.x, 0.2);
+    p = pos + vec3(0, 0, -0.2);
+    pR(p.xy, sin(flap) * 0.4);
+    result = mUnion(result, vec2(fBox(p, vec3(2, 0.1, 0.5)), 1.0));
+    p -= vec3(2.95, sin(flap) * 0.4, 0);
+    pR(p.xy, sin(flap) * 0.4);
+    p.z += 0.2;
+    pR(p.xz, -0.2);
+    result = mUnion(result, vec2(fBox(p, vec3(0.8, 0.1, 0.45)), 2.0));
+
+    // Eyes, also mirrored
+    p = pos + vec3(0, -0.12, -0.9);
+    result = mUnion(result, vec2(fSphere(p, 0.05), 4.0));
+
+    return result;
+}
+
+vec2 SDF(vec3 pos) {
+    // Repeate buildings across xz
+    vec3 p = pos;
+    pMod2(p.xz, vec2(50));
+    // Repeat floors along the y axis
+    pMod1(p.y, 3);
+    float d = fBox(p, vec3(10, 1.2, 10));
+    d = min(d, fBox(p, vec3(9.5)));
 
     vec2 result = vec2(d, 1.0);
 
-    // Repeated lines to cut away strips
-    // vec3 repeatedPosition = pos;
-    // pMod1(repeatedPosition.x, 0.5);
-    // float strip = fBox(repeatedPosition + vec3(0, 2, 0), vec3(0.02, 2, 1000));
-    // vec2 result = vec2(max(d, strip), 1.0);
-
-    // Center sphere
-    // result = mUnion(result, vec2(fSphere(pos, 2), 1.0));
+    // Seagull
+    result = mUnion(result, seagull(pos + vec3(0, 0, 25)));
 
     return result;
-    // return vec2(d, 1.0);
 }
 
 vec3 calculateNormal(vec3 pos) {
@@ -880,6 +918,12 @@ float rand(vec2 coord) {
     return fract(sin(dot(coord.xy, vec2(12.9898, 78.233))) * 43758.5453);
 }
 
+vec3 applyFog(vec3 rgb, float dist) {
+    float startDist = 200.0;
+    float fogAmount = 1.0 - exp(-(dist - 8.0) * (1.0 / startDist));
+    return mix(rgb, vec3(0.05, 0.05, 0.08), fogAmount);
+}
+
 vec3 render(vec2 uv, vec3 origin, vec3 direction) {
     vec3 color = vec3(0.0);
     IntersectionResult result = castRay(origin, direction);
@@ -892,38 +936,34 @@ vec3 render(vec2 uv, vec3 origin, vec3 direction) {
         vec3 normal = calculateNormal(position);
         // return normal * vec3(0.5) + vec3(0.5); // Debug draw: Normals
 
-        vec3 lightPosition = vec3(0, 1, 0);
-        float lightRadius = 3.0;
-        // vec3 lightDirection = normalize(vec3(0.5, 0.2, -0.8));
-        vec3 lightDirection = normalize(lightPosition - position);
+        // vec3 lightPosition = vec3(0, 1, 0);
+        // float lightRadius = 3.0;
+        vec3 lightDirection = normalize(vec3(0.3, 0.9, -0.6));
+        // vec3 lightDirection = normalize(lightPosition - position);
 
-        color = vec3(1.0); // TODO: Material color
-        if(result.material == 1.0) {
-            // Grid pattern for the floor
-            color = mix(vec3(0.25), vec3(0.3), vec3(checkersTextureGradBox(position.xz, dFdx(position.xz), dFdy(position.xz))));
-            // Mix based on y position to color the walls differently
-            color = mix(color, vec3(1), step(-0.99, position.y));
+        color = vec3(1, 0, 0); // This is the "error" color, if I've forgotten to assign a material
+        if(result.material == 1.0) { // "Seagull" white
+            color = vec3(1.0);
+        } else if(result.material == 2.0) { // "Seagull" gray
+            color = vec3(0.4);
+        } else if(result.material == 3.0) { // "Seagull" beak orange
+            color = vec3(1.0, 0.52, 0.0);
+        } else if(result.material == 4.0) { // Black
+            color = vec3(0);
         }
-        // color = vec3(acos(normalize(position.xz)).x);
-        // color = vec3(step(0.9, mod((atan(position.x, position.z) / TWOPI) * 6, 1))) * vec3(0.96, 0.2, 0.66);
 
         // Light
-        float lightDistance = length(lightPosition - position);
-        float att = clamp(1.0 - lightDistance * lightDistance / (lightRadius * lightRadius), 0.0, 1.0);
-        vec3 directionalLight = vec3(1.0) * max(dot(normal, lightDirection), 0.0) * att;
+        vec3 directionalLight = vec3(1.0) * max(dot(normal, lightDirection), 0.0);
         vec3 ambientLight = vec3(0.03);
         color *= directionalLight + ambientLight;
 
         // Shadows
-        IntersectionResult shadowRayIntersection = castRay(position + normal * 0.001, lightDirection);
-        if(shadowRayIntersection.material != -1.0 && shadowRayIntersection.distance < lightRadius) {
-            color = mix(color, vec3(0), 0.8);
-        }
-    } else {
-        float rf = sqrt(dot(uv, uv)) * 0.4;
-        float rf2_1 = rf * rf + 1.0;
-        float e = 1.0 / (rf2_1 * rf2_1);
-        color = vec3(0.49, 0.6, 0.43) * e;
+        // IntersectionResult shadowRayIntersection = castRay(position + normal * 0.001, lightDirection);
+        // if(shadowRayIntersection.material != -1.0) {
+        //     color = mix(color, vec3(0), 0.8);
+        // }
+
+        color = applyFog(color, result.distance);
     }
 
     return color;

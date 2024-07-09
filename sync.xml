@@ -7,16 +7,15 @@ beatsPerMin="125">
 	</track>
 	<track name="camera_position:x" folded="0" muteKeyCount="0"
 color="ffb28050">
-		<key row="0" value="1.900000" interpolation="1" />
-		<key row="16" value="4.299998" interpolation="0" />
+		<key row="0" value="-7.000000" interpolation="0" />
 	</track>
 	<track name="camera_position:y" folded="0" muteKeyCount="0"
 color="ffa9b250">
-		<key row="0" value="1.099992" interpolation="0" />
+		<key row="0" value="4.000000" interpolation="0" />
 	</track>
 	<track name="camera_position:z" folded="0" muteKeyCount="0"
 color="ff60b250">
-		<key row="0" value="-8.000001" interpolation="0" />
+		<key row="0" value="-21.000000" interpolation="0" />
 	</track>
 	<track name="camera_target:x" folded="0" muteKeyCount="0"
 color="ff4fb292">
@@ -28,7 +27,7 @@ color="ff4f71b2">
 	</track>
 	<track name="camera_target:z" folded="0" muteKeyCount="0"
 color="ff8850b2">
-		<key row="0" value="0.000000" interpolation="0" />
+		<key row="0" value="-25.000000" interpolation="0" />
 	</track>
 </tracks>
 	</rootElement>

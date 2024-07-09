@@ -5,7 +5,7 @@
 
 #include "Rocket.h"
 #include "TimeSource.h"
-#include "scenes/Ridges.h"
+#include "scenes/City.h"
 
 int main() {
     raylib::Window window(960, 540, "Cgull");
@@ -19,7 +19,7 @@ int main() {
 #endif
 
     std::unique_ptr<Scene> scenes[] = {
-        std::make_unique<Ridges>(timeSource, rocket),
+        std::make_unique<City>(timeSource, rocket),
     };
 
     float windowWidth = GetScreenWidth();

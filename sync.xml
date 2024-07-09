@@ -1,33 +1,79 @@
 <?xml version="1.0" encoding="utf-8"?>
 <rootElement>
 <tracks rows="10000" startRow="0" endRow="10000" rowsPerBeat="8"
-beatsPerMin="125">
+beatsPerMin="175">
 	<track name="scene" folded="0" muteKeyCount="0" color="ffb27474">
 		<key row="0" value="0.000000" interpolation="0" />
 	</track>
+	<track name="ftb" folded="0" muteKeyCount="0" color="ffb25091">
+		<key row="0" value="1.000000" interpolation="1" />
+		<key row="32" value="0.800000" interpolation="1" />
+		<key row="64" value="0.000000" interpolation="0" />
+	</track>
 	<track name="camera_position:x" folded="0" muteKeyCount="0"
 color="ffb28050">
-		<key row="0" value="-7.000000" interpolation="0" />
+		<key row="0" value="0.000000" interpolation="0" />
+		<key row="256" value="0.000000" interpolation="0" />
 	</track>
 	<track name="camera_position:y" folded="0" muteKeyCount="0"
 color="ffa9b250">
-		<key row="0" value="4.000000" interpolation="0" />
+		<key row="0" value="0.000000" interpolation="1" />
+		<key row="256" value="-5.000000" interpolation="1" />
+		<key row="320" value="5.000000" interpolation="1" />
 	</track>
 	<track name="camera_position:z" folded="0" muteKeyCount="0"
 color="ff60b250">
-		<key row="0" value="-21.000000" interpolation="0" />
+		<key row="0" value="0.000000" interpolation="1" />
+		<key row="256" value="200.000000" interpolation="1" />
+		<key row="320" value="320.000000" interpolation="1" />
+		<key row="512" value="600.000000" interpolation="0" />
 	</track>
-	<track name="camera_target:x" folded="0" muteKeyCount="0"
+	<track name="camera_rotation:x" folded="0" muteKeyCount="0"
 color="ff4fb292">
-		<key row="0" value="0.000000" interpolation="0" />
+		<key row="0" value="-30.000000" interpolation="2" />
+		<key row="64" value="-30.000000" interpolation="2" />
+		<key row="256" value="-27.000000" interpolation="2" />
+		<key row="288" value="-40.000000" interpolation="2" />
+		<key row="320" value="-10.000000" interpolation="2" />
 	</track>
-	<track name="camera_target:y" folded="0" muteKeyCount="0"
+	<track name="camera_rotation:y" folded="0" muteKeyCount="0"
 color="ff4f71b2">
-		<key row="0" value="0.000000" interpolation="0" />
+		<key row="0" value="0.000000" interpolation="2" />
+		<key row="64" value="0.000000" interpolation="2" />
+		<key row="112" value="-45.000000" interpolation="2" />
+		<key row="208" value="45.000000" interpolation="2" />
+		<key row="256" value="60.000000" interpolation="2" />
+		<key row="288" value="-37.000000" interpolation="2" />
+		<key row="320" value="-142.000000" interpolation="2" />
+		<key row="416" value="-72.000000" interpolation="2" />
+		<key row="512" value="-12.000000" interpolation="2" />
 	</track>
-	<track name="camera_target:z" folded="0" muteKeyCount="0"
+	<track name="camera_rotation:z" folded="0" muteKeyCount="0"
 color="ff8850b2">
-		<key row="0" value="-25.000000" interpolation="0" />
+		<key row="0" value="0.000000" interpolation="2" />
+		<key row="64" value="0.000000" interpolation="2" />
+		<key row="256" value="0.000000" interpolation="2" />
+		<key row="288" value="0.000000" interpolation="2" />
+		<key row="320" value="0.000000" interpolation="2" />
+	</track>
+	<track name="seagull:x" folded="0" muteKeyCount="0"
+color="ffb27474">
+		<key row="256" value="24.000000" interpolation="1" />
+		<key row="288" value="-7.000000" interpolation="1" />
+	</track>
+	<track name="seagull:y" folded="0" muteKeyCount="0"
+color="ffb28050">
+		<key row="256" value="11.000000" interpolation="2" />
+		<key row="288" value="7.000000" interpolation="2" />
+		<key row="320" value="9.000000" interpolation="2" />
+		<key row="352" value="5.000000" interpolation="2" />
+		<key row="384" value="9.000000" interpolation="2" />
+		<key row="416" value="5.000000" interpolation="1" />
+	</track>
+	<track name="seagull:z" folded="0" muteKeyCount="0"
+color="ffa9b250">
+		<key row="256" value="212.000000" interpolation="1" />
+		<key row="512" value="612.000000" interpolation="1" />
 	</track>
 </tracks>
 	</rootElement>

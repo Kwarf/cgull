@@ -63,5 +63,5 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE $<$<CONFIG:Release>:SYNC_PLAY
 if(WIN32)
 	add_executable(incbin-bin ${incbin_SOURCE_DIR}/incbin.c)
 	add_dependencies(${PROJECT_NAME} incbin-bin)
-	add_custom_command(OUTPUT data.c COMMAND $<TARGET_FILE:incbin-bin> ${CMAKE_SOURCE_DIR}/src/scenes/Ridges.h)
+	add_custom_command(OUTPUT data.c COMMAND $<TARGET_FILE:incbin-bin> ${CMAKE_SOURCE_DIR}/src/scenes/City.h)
 endif()

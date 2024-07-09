@@ -2,8 +2,10 @@
 
 uniform vec2 resolution;
 uniform float time;
+uniform float fadeToBlack;
 uniform vec3 cameraPosition;
-uniform vec3 cameraTarget;
+uniform vec3 cameraRotation;
+uniform vec3 seagullPosition;
 
 out vec4 color;
 
@@ -11,6 +13,13 @@ const float MAX_DIST = 100.0;
 const int MAX_STEPS = 128;
 const float PI = 3.1415926535897932384626433832795;
 const float TWOPI = PI * 2.0;
+
+const float BPM = 175.0;
+float beat = time / (60.0 / BPM);
+float beatHit() {
+    float i;
+    return 1.0 - modf(beat, i);
+}
 
 // region hg_sdf.glsl
 
@@ -836,7 +845,7 @@ vec2 seagull(vec3 pos) {
     result = mUnion(result, vec2(fBox(pos + vec3(0, 0, -1.25), vec3(0.05, 0.08, 0.2)), 3.0));
 
     // Wings, mirrored along the x axis, flapping
-    float flap = sin(time * 3);
+    float flap = beat * 2 * (PI / 2);
     pMirror(pos.x, 0.2);
     p = pos + vec3(0, 0, -0.2);
     pR(p.xy, sin(flap) * 0.4);
@@ -856,7 +865,7 @@ vec2 seagull(vec3 pos) {
 
 vec2 SDF(vec3 pos) {
     // Repeate buildings across xz
-    vec3 p = pos;
+    vec3 p = pos + vec3(25, 0, 0);
     pMod2(p.xz, vec2(50));
     // Repeat floors along the y axis
     pMod1(p.y, 3);
@@ -866,7 +875,7 @@ vec2 SDF(vec3 pos) {
     vec2 result = vec2(d, 1.0);
 
     // Seagull
-    result = mUnion(result, seagull(pos + vec3(0, 0, 25)));
+    result = mUnion(result, seagull(pos - seagullPosition));
 
     return result;
 }
@@ -966,16 +975,36 @@ vec3 render(vec2 uv, vec3 origin, vec3 direction) {
         color = applyFog(color, result.distance);
     }
 
+    // Some vignettish looking thing
+    color *= smoothstep(0.8, 0.2, length(uv) / 1.0 * 0.3);
+
     return color;
 }
 
-vec3 getCameraRayDir(vec2 uv, vec3 position, vec3 target) {
-    vec3 forward = normalize(target - position);
-    vec3 right = normalize(cross(vec3(0, 1, 0), forward));
-    vec3 up = normalize(cross(forward, right));
+mat3 rotateX(float theta) {
+    float c = cos(theta);
+    float s = sin(theta);
+    return mat3(vec3(1, 0, 0), vec3(0, c, -s), vec3(0, s, c));
+}
 
-    float fov = 2;
-    return normalize(uv.x * right + uv.y * up + forward * fov);
+mat3 rotateY(float theta) {
+    float c = cos(theta);
+    float s = sin(theta);
+    return mat3(vec3(c, 0, s), vec3(0, 1, 0), vec3(-s, 0, c));
+}
+
+mat3 rotateZ(float theta) {
+    float c = cos(theta);
+    float s = sin(theta);
+    return mat3(vec3(c, -s, 0), vec3(s, c, 0), vec3(0, 0, 1));
+}
+
+vec3 getCameraRayDir(vec2 uv, vec3 position, vec3 rotation) {
+    vec3 rd = normalize(vec3(uv / 2, 1));
+    rd *= rotateX(rotation.x);
+    rd *= rotateY(rotation.y);
+    rd *= rotateZ(rotation.z);
+    return rd;
 }
 
 vec2 normalizeScreenCoords(vec2 screenCoord) {
@@ -986,6 +1015,7 @@ vec2 normalizeScreenCoords(vec2 screenCoord) {
 
 void main() {
     vec2 uv = normalizeScreenCoords(gl_FragCoord.xy);
-    vec3 rayDirection = getCameraRayDir(uv, cameraPosition, cameraTarget);
+    vec3 rayDirection = getCameraRayDir(uv, cameraPosition, radians(cameraRotation));
     color = pow(vec4(render(uv, cameraPosition, rayDirection), 1), vec4(0.4545));
+    color = mix(color, vec4(0, 0, 0, 1), fadeToBlack);
 }

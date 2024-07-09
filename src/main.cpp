@@ -9,9 +9,11 @@
 
 int main() {
     raylib::Window window(960, 540, "Cgull");
+    raylib::AudioDevice audioDevice;
+    raylib::Music music("../../assets/music.ogg");
 
     TimeSource timeSource;
-    Rocket rocket(timeSource);
+    Rocket rocket(timeSource, music);
     const auto rocketScene = rocket.track("scene");
 
 #ifdef __APPLE__
@@ -26,6 +28,7 @@ int main() {
     float windowHeight = GetScreenHeight();
     raylib::RenderTexture renderTexture(RENDER_WIDTH, RENDER_HEIGHT);
 
+    music.Play();
     while (!window.ShouldClose()) {
         if (IsWindowResized()) {
             windowWidth = GetScreenWidth();
@@ -33,6 +36,7 @@ int main() {
         }
         timeSource.tick();
         rocket.update();
+        music.Update();
 
         const int sceneIdx = rocketScene.value();
         if (sceneIdx < 0 || sceneIdx >= sizeof(scenes) / sizeof(scenes[0])) {

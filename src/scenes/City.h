@@ -25,11 +25,15 @@ public:
 #endif
           locResolution(shaderWrapper.getShader().GetLocation("resolution")),
           locTime(shaderWrapper.getShader().GetLocation("time")),
+          locFadeToBlack(shaderWrapper.getShader().GetLocation("fadeToBlack")),
           locCameraPosition(shaderWrapper.getShader().GetLocation("cameraPosition")),
-          locCameraTarget(shaderWrapper.getShader().GetLocation("cameraTarget")),
-          cameraPositionX(rocket.track("camera_position:x")), cameraPositionY(rocket.track("camera_position:y")),
-          cameraPositionZ(rocket.track("camera_position:z")), cameraTargetX(rocket.track("camera_target:x")),
-          cameraTargetY(rocket.track("camera_target:y")), cameraTargetZ(rocket.track("camera_target:z")){};
+          locCameraRotation(shaderWrapper.getShader().GetLocation("cameraRotation")),
+          locSeagullPosition(shaderWrapper.getShader().GetLocation("seagullPosition")),
+          fadeToBlack(rocket.track("ftb")), cameraPositionX(rocket.track("camera_position:x")),
+          cameraPositionY(rocket.track("camera_position:y")), cameraPositionZ(rocket.track("camera_position:z")),
+          cameraRotationX(rocket.track("camera_rotation:x")), cameraRotationY(rocket.track("camera_rotation:y")),
+          cameraRotationZ(rocket.track("camera_rotation:z")), seagullX(rocket.track("seagull:x")),
+          seagullY(rocket.track("seagull:y")), seagullZ(rocket.track("seagull:z")){};
 
     void render() override {
         auto &shader = shaderWrapper.getShader();
@@ -39,15 +43,21 @@ public:
         const float time = timeSource.now();
         shader.SetValue(locTime, &time, SHADER_UNIFORM_FLOAT);
 
+        const float fadeToBlackValue = fadeToBlack.value();
+        shader.SetValue(locFadeToBlack, &fadeToBlackValue, SHADER_UNIFORM_FLOAT);
         float vec3[3];
         vec3[0] = cameraPositionX.value();
         vec3[1] = cameraPositionY.value();
         vec3[2] = cameraPositionZ.value();
         shader.SetValue(locCameraPosition, &vec3, SHADER_UNIFORM_VEC3);
-        vec3[0] = cameraTargetX.value();
-        vec3[1] = cameraTargetY.value();
-        vec3[2] = cameraTargetZ.value();
-        shader.SetValue(locCameraTarget, &vec3, SHADER_UNIFORM_VEC3);
+        vec3[0] = cameraRotationX.value();
+        vec3[1] = cameraRotationY.value();
+        vec3[2] = cameraRotationZ.value();
+        shader.SetValue(locCameraRotation, &vec3, SHADER_UNIFORM_VEC3);
+        vec3[0] = seagullX.value();
+        vec3[1] = seagullY.value();
+        vec3[2] = seagullZ.value();
+        shader.SetValue(locSeagullPosition, &vec3, SHADER_UNIFORM_VEC3);
 
         shader.BeginMode();
         DrawRectangle(0, 0, RENDER_WIDTH, RENDER_HEIGHT, WHITE);
@@ -61,13 +71,19 @@ private:
 
     int locResolution;
     int locTime;
+    int locFadeToBlack;
     int locCameraPosition;
-    int locCameraTarget;
+    int locCameraRotation;
+    int locSeagullPosition;
 
+    Rocket::Track fadeToBlack;
     Rocket::Track cameraPositionX;
     Rocket::Track cameraPositionY;
     Rocket::Track cameraPositionZ;
-    Rocket::Track cameraTargetX;
-    Rocket::Track cameraTargetY;
-    Rocket::Track cameraTargetZ;
+    Rocket::Track cameraRotationX;
+    Rocket::Track cameraRotationY;
+    Rocket::Track cameraRotationZ;
+    Rocket::Track seagullX;
+    Rocket::Track seagullY;
+    Rocket::Track seagullZ;
 };

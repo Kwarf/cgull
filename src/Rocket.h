@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include <raylib.h>
+#include <raylib-cpp.hpp>
 #include <sync.h>
 
 #include "Constants.h"
@@ -23,8 +23,8 @@ public:
         const sync_track *track;
     };
 
-    Rocket(TimeSource &timeSource)
-        : timeSource(timeSource)
+    Rocket(TimeSource &timeSource, raylib::Music &music)
+        : timeSource(timeSource), music(music)
 #ifndef NDEBUG
           ,
           callbacks{reinterpret_cast<void (*)(void *, int)>(setPaused), reinterpret_cast<void (*)(void *, int)>(setRow),
@@ -56,9 +56,15 @@ private:
 #ifndef NDEBUG
     static void setPaused(Rocket *rocket, int paused) {
         rocket->timeSource.setPaused(paused);
+        if (paused) {
+            rocket->music.Pause();
+        } else {
+            rocket->music.Resume();
+        }
     }
 
     static void setRow(Rocket *rocket, int row) {
+        rocket->music.Seek(row / SYNC_ROW_RATE);
         rocket->timeSource.setTime(row / SYNC_ROW_RATE);
     }
 
@@ -68,6 +74,7 @@ private:
 #endif
 
     TimeSource &timeSource;
+    raylib::Music &music;
     sync_device *rocket;
 #ifndef NDEBUG
     sync_cb callbacks;

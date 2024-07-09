@@ -9,6 +9,8 @@ out vec4 color;
 
 const float MAX_DIST = 100.0;
 const int MAX_STEPS = 128;
+const float PI = 3.1415926535897932384626433832795;
+const float TWOPI = PI * 2.0;
 
 // region hg_sdf.glsl
 
@@ -801,40 +803,34 @@ float fOpTongue(float a, float b, float ra, float rb) {
 
 // endregion
 
-vec4 mUnion(vec4 a, vec4 b) {
+vec2 mUnion(vec2 a, vec2 b) {
     return (a.x < b.x) ? a : b;
 }
 
-vec4 SDF(vec3 pos) {
-    vec3 distortedPos = pos;
-    distortedPos.y += sin(distortedPos.z / 4) * 0.4;
-    distortedPos.y += sin(distortedPos.z) * 0.1;
-    distortedPos.y += cos(distortedPos.x / 2.5) * 0.3;
-    distortedPos.y += cos(distortedPos.x / 6) * 0.4;
-    distortedPos.x += sin(distortedPos.z / 2) * 0.2;
-    distortedPos.x += sin(distortedPos.z / 6) * 0.3;
-    if(abs(distortedPos.z) < 4.0) { // High frequency distortions
-        distortedPos.x += sin(distortedPos.z * 30) * (((4 - abs(distortedPos.z)) / 5) * 0.03);
-    }
-    distortedPos.y += length(distortedPos.xz) * 0.3;
-
-    if(length(distortedPos.xz) < 3) {
-        distortedPos.y += 3 - length(distortedPos.xz);
-    }
-
+vec2 SDF(vec3 pos) {
+    // float d = fTorus(pos, 1, 4.0);
     // Base box
-    float d = fBox(distortedPos, vec3(1000, 5, 1000));
+    float d = fBox(pos, vec3(10, 2, 10));
+    d = max(d, -fBox(pos + vec3(0, -1, 0), vec3(9, 2, 9)));
+
+    // Columns
+    vec3 repeatedPosition = pos;
+    pModPolar(repeatedPosition.xz, 6);
+    d = min(d, fBox(repeatedPosition - vec3(3, 0, 0), vec3(0.5, 2, 0.5)));
+
+    vec2 result = vec2(d, 1.0);
 
     // Repeated lines to cut away strips
-    vec3 repeatedPosition = distortedPos;
-    pMod1(repeatedPosition.x, 0.5);
-    float strip = fBox(repeatedPosition + vec3(0, 2, 0), vec3(0.02, 2, 1000));
-    vec4 result = vec4(max(d, strip), vec3(0, 1, 0));
+    // vec3 repeatedPosition = pos;
+    // pMod1(repeatedPosition.x, 0.5);
+    // float strip = fBox(repeatedPosition + vec3(0, 2, 0), vec3(0.02, 2, 1000));
+    // vec2 result = vec2(max(d, strip), 1.0);
 
     // Center sphere
-    result = mUnion(result, vec4(fSphere(pos, 2), vec3(0.6, 0.1, 0)));
+    // result = mUnion(result, vec2(fSphere(pos, 2), 1.0));
 
     return result;
+    // return vec2(d, 1.0);
 }
 
 vec3 calculateNormal(vec3 pos) {
@@ -845,7 +841,7 @@ vec3 calculateNormal(vec3 pos) {
 
 struct IntersectionResult {
     float distance;
-    vec3 color;
+    float material;
     int steps;
 };
 
@@ -853,24 +849,30 @@ IntersectionResult castRay(vec3 origin, vec3 direction) {
     float dist = 0.0;
 
     IntersectionResult result;
-    result.color = vec3(0);
+    result.material = -1.0;
 
     for(result.steps = 0; result.steps < MAX_STEPS; result.steps++) {
-        vec4 res = SDF(origin + direction * dist);
+        vec2 res = SDF(origin + direction * dist);
         if(res.x < (0.0001 * dist)) {
             result.distance = dist;
             return result;
         } else if(res.x > MAX_DIST) {
-            result.color = vec3(0);
+            result.material = -1.0;
             result.distance = -1.0;
             return result;
         }
         dist += res.x;
-        result.color = res.yzw;
+        result.material = res.y;
     }
 
     result.distance = dist;
     return result;
+}
+
+float checkersTextureGradBox(in vec2 p, in vec2 ddx, in vec2 ddy) {
+    vec2 w = max(abs(ddx), abs(ddy)) + 0.01;
+    vec2 i = 2.0 * (abs(fract((p - 0.5 * w) / 2.0) - 0.5) - abs(fract((p + 0.5 * w) / 2.0) - 0.5)) / w;
+    return 0.5 - 0.5 * i.x * i.y;
 }
 
 // Return a psuedo random value in the range [0, 1), seeded via coord
@@ -878,47 +880,51 @@ float rand(vec2 coord) {
     return fract(sin(dot(coord.xy, vec2(12.9898, 78.233))) * 43758.5453);
 }
 
-vec3 render(vec3 origin, vec3 direction) {
+vec3 render(vec2 uv, vec3 origin, vec3 direction) {
     vec3 color = vec3(0.0);
     IntersectionResult result = castRay(origin, direction);
 
+    float nsteps = result.steps / float(MAX_STEPS);
     // return vec3(result.steps / float(MAX_STEPS), 0.0, 0.0); // Debug draw: Step count
 
-    vec3 lightDirection = normalize(vec3(0.5, 0.1, -0.5));
-
-    if(length(result.color) > 0) {
+    if(result.material > -1.0) {
         vec3 position = origin + direction * result.distance;
         vec3 normal = calculateNormal(position);
-
         // return normal * vec3(0.5) + vec3(0.5); // Debug draw: Normals
 
-        color = result.color;
-        color *= (5 + position.y) / 5;
+        vec3 lightPosition = vec3(0, 1, 0);
+        float lightRadius = 3.0;
+        // vec3 lightDirection = normalize(vec3(0.5, 0.2, -0.8));
+        vec3 lightDirection = normalize(lightPosition - position);
 
-        vec3 directionalLight = vec3(1.25, 1.2, 0.8) * max(dot(normal, lightDirection), 0.0);
-        vec3 ambientLight = vec3(0.03, 0.6, 0.1);
-        color *= (directionalLight + ambientLight);
+        color = vec3(1.0); // TODO: Material color
+        if(result.material == 1.0) {
+            // Grid pattern for the floor
+            color = mix(vec3(0.25), vec3(0.3), vec3(checkersTextureGradBox(position.xz, dFdx(position.xz), dFdy(position.xz))));
+            // Mix based on y position to color the walls differently
+            color = mix(color, vec3(1), step(-0.99, position.y));
+        }
+        // color = vec3(acos(normalize(position.xz)).x);
+        // color = vec3(step(0.9, mod((atan(position.x, position.z) / TWOPI) * 6, 1))) * vec3(0.96, 0.2, 0.66);
+
+        // Light
+        float lightDistance = length(lightPosition - position);
+        float att = clamp(1.0 - lightDistance * lightDistance / (lightRadius * lightRadius), 0.0, 1.0);
+        vec3 directionalLight = vec3(1.0) * max(dot(normal, lightDirection), 0.0) * att;
+        vec3 ambientLight = vec3(0.03);
+        color *= directionalLight + ambientLight;
 
         // Shadows
-        // float shadow = 0.0;
-        // float shadowRayCount = 2.0;
-        // for(float s = 0.0; s < shadowRayCount; s++) {
-        //     vec3 shadowRayOrigin = position + normal * 0.01;
-        //     float r = rand(vec2(direction.xy)) * 2.0 - 1.0;
-        //     const float SHADOW_FALLOFF = 0.01;
-        //     vec3 shadowRayDir = lightDirection + vec3(1.0 * SHADOW_FALLOFF) * r;
-        //     IntersectionResult shadowRayIntersection = castRay(shadowRayOrigin, shadowRayDir);
-        //     if(length(shadowRayIntersection.color) != 0.0) {
-        //         shadow += 1.0;
-        //     }
-        // }
-
-        // vec3 cshadow = pow(vec3(shadow), vec3(1.0, 1.2, 1.5));
-        // color = mix(color, color * cshadow * (1.0 - 0.8), shadow / shadowRayCount);
+        IntersectionResult shadowRayIntersection = castRay(position + normal * 0.001, lightDirection);
+        if(shadowRayIntersection.material != -1.0 && shadowRayIntersection.distance < lightRadius) {
+            color = mix(color, vec3(0), 0.8);
+        }
+    } else {
+        float rf = sqrt(dot(uv, uv)) * 0.4;
+        float rf2_1 = rf * rf + 1.0;
+        float e = 1.0 / (rf2_1 * rf2_1);
+        color = vec3(0.49, 0.6, 0.43) * e;
     }
-
-    // Some sort of AO-looking thing by (ab)using the step count?
-    // color += -1 * (1.5 * vec3(result.steps / float(MAX_STEPS)));
 
     return color;
 }
@@ -941,5 +947,5 @@ vec2 normalizeScreenCoords(vec2 screenCoord) {
 void main() {
     vec2 uv = normalizeScreenCoords(gl_FragCoord.xy);
     vec3 rayDirection = getCameraRayDir(uv, cameraPosition, cameraTarget);
-    color = pow(vec4(render(cameraPosition, rayDirection), 1), vec4(0.4545));
+    color = pow(vec4(render(uv, cameraPosition, rayDirection), 1), vec4(0.4545));
 }

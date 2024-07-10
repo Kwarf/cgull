@@ -12,7 +12,7 @@
 #include "ShaderWrapper.h"
 #include "TimeSource.h"
 
-INCBIN(city_fs, "../src/scenes/City.fs");
+INCBIN(city_fs, "../src/scenes/City.min.fs");
 
 class City : public Scene {
 public:

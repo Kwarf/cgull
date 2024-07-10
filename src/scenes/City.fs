@@ -839,12 +839,12 @@ float sdRoundCone(vec3 p, float r1, float r2, float h) {
 vec2 seagull(vec3 pos) {
     // Body
     vec3 p = pos + vec3(0, 0, -0.5);
-    pR(p.yz, -radians(90));
+    pR(p.yz, -radians(90.0));
     float d = sdRoundCone(p, 0.4, 0.3, 1);
     d = min(d, sdRoundCone(p + vec3(0, 0.5, 0), 0.2, 0.4, 0.5));
     vec2 result = vec2(d, 1.0);
     // Tail
-    pR(p.yz, radians(5));
+    pR(p.yz, radians(5.0));
     result = mUnion(result, vec2(sdRoundCone(p + vec3(0, -1, 0.1), 0.28, 0.1, 1), 2.0));
     // Beak
     result = mUnion(result, vec2(fBox(pos + vec3(0, 0, -1.25), vec3(0.05, 0.08, 0.2)), 3.0));
@@ -871,11 +871,11 @@ vec2 seagull(vec3 pos) {
 vec2 flock(vec3 pos) {
     vec2 result = vec2(1000.0, 0.0);
     pos += vec3(sin(beat / 4 * HPI), 0, sin(beat / 8 * HPI) * 8.0);
-    pR(pos.xy, -radians(10) * sin(beat / 8 * HPI));
+    pR(pos.xy, -radians(10.0) * sin(beat / 8 * HPI));
     for(int i = -1; i < 2; i++) {
         vec3 p = pos + vec3(float(i) * 10, 0, abs(i) * 3);
-        pR(p.yz, -radians(10) * sin(beat / 4 * HPI));
-        pR(p.xy, -radians(45) * i * sin(beat / 2 * HPI));
+        pR(p.yz, -radians(10.0) * sin(beat / 4 * HPI));
+        pR(p.xy, -radians(45.0) * i * sin(beat / 2 * HPI));
         result = mUnion(result, seagull(p));
     }
     return result;

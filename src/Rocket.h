@@ -1,9 +1,12 @@
 #pragma once
 
+#include <sstream>
 #include <string>
 
+#include <device.h>
 #include <raylib-cpp.hpp>
 #include <sync.h>
+#include <track.h>
 
 #include "Constants.h"
 #include "TimeSource.h"
@@ -17,6 +20,31 @@ public:
         double value() const {
             return sync_get_val(track, timeSource.now() * SYNC_ROW_RATE);
         }
+
+#ifdef NDEBUG
+        static std::vector<sync_track> fromData(const unsigned char *data, size_t size) {
+            std::istringstream stream(std::string(data, data + size), std::ios::binary);
+
+            uint8_t numTracks;
+            stream.read(reinterpret_cast<char*>(&numTracks), sizeof(numTracks));
+            std::vector<sync_track> tracks(numTracks);
+
+            for (auto &track : tracks) {
+                uint8_t trackNameLength;
+                stream.read(reinterpret_cast<char*>(&trackNameLength), sizeof(trackNameLength));
+                track.name = new char[trackNameLength];
+                stream.read(track.name, trackNameLength);
+
+                uint16_t keyCount;
+                stream.read(reinterpret_cast<char*>(&keyCount), sizeof(keyCount));
+                track.keys = new track_key[keyCount];
+                track.num_keys = keyCount;
+                stream.read(reinterpret_cast<char*>(track.keys), sizeof(track_key) * keyCount);
+            }
+
+            return tracks;
+        }
+#endif
 
     private:
         const TimeSource &timeSource;
@@ -50,6 +78,10 @@ public:
 
     Track track(const std::string &name) const {
         return Track(timeSource, sync_get_track(rocket, name.c_str()));
+    }
+
+    sync_device *device() {
+        return rocket;
     }
 
 private:

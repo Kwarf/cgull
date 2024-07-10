@@ -12,10 +12,15 @@ out vec4 color;
 const float MAX_DIST = 100.0;
 const int MAX_STEPS = 128;
 const float PI = 3.1415926535897932384626433832795;
+const float HPI = PI / 2.0;
 const float TWOPI = PI * 2.0;
 
 const float BPM = 175.0;
+const float SYNC_ROWS_PER_BEAT = 4.0;
+const float SYNC_ROW_RATE = (BPM / 60.0) * SYNC_ROWS_PER_BEAT;
+
 float beat = time / (60.0 / BPM);
+float row = time * SYNC_ROW_RATE;
 float beatHit() {
     float i;
     return 1.0 - modf(beat, i);
@@ -845,7 +850,7 @@ vec2 seagull(vec3 pos) {
     result = mUnion(result, vec2(fBox(pos + vec3(0, 0, -1.25), vec3(0.05, 0.08, 0.2)), 3.0));
 
     // Wings, mirrored along the x axis, flapping
-    float flap = beat * 2 * (PI / 2);
+    float flap = beat * 2 * HPI;
     pMirror(pos.x, 0.2);
     p = pos + vec3(0, 0, -0.2);
     pR(p.xy, sin(flap) * 0.4);
@@ -863,6 +868,19 @@ vec2 seagull(vec3 pos) {
     return result;
 }
 
+vec2 flock(vec3 pos) {
+    vec2 result = vec2(1000.0, 0.0);
+    pos += vec3(sin(beat / 4 * HPI), 0, sin(beat / 8 * HPI) * 8.0);
+    pR(pos.xy, -radians(10) * sin(beat / 8 * HPI));
+    for(int i = -1; i < 2; i++) {
+        vec3 p = pos + vec3(float(i) * 10, 0, abs(i) * 3);
+        pR(p.yz, -radians(10) * sin(beat / 4 * HPI));
+        pR(p.xy, -radians(45) * i * sin(beat / 2 * HPI));
+        result = mUnion(result, seagull(p));
+    }
+    return result;
+}
+
 vec2 SDF(vec3 pos) {
     // Repeate buildings across xz
     vec3 p = pos + vec3(25, 0, 0);
@@ -875,7 +893,11 @@ vec2 SDF(vec3 pos) {
     vec2 result = vec2(d, 1.0);
 
     // Seagull
-    result = mUnion(result, seagull(pos - seagullPosition));
+    if(row < 256) {
+        result = mUnion(result, seagull(pos - seagullPosition));
+    } else {
+        result = mUnion(result, flock(pos - seagullPosition));
+    }
 
     return result;
 }

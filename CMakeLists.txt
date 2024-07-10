@@ -89,12 +89,16 @@ if(WIN32)
 	)
 endif()
 
-# Minify shaders on Windows
-if(WIN32)
+if(WIN32) # Minify shaders on Windows
 	add_custom_command(OUTPUT ${CMAKE_SOURCE_DIR}/src/scenes/City.min.fs
 		DEPENDS ${CMAKE_SOURCE_DIR}/src/scenes/City.fs
 		COMMAND ${shader-minifier_SOURCE_DIR}/shader_minifier.exe -o ${CMAKE_SOURCE_DIR}/src/scenes/City.min.fs --format text --preserve-externals ${CMAKE_SOURCE_DIR}/src/scenes/City.fs
 	)
-	add_custom_target(minified-shaders DEPENDS ${CMAKE_SOURCE_DIR}/src/scenes/City.min.fs)
-	add_dependencies(${PROJECT_NAME} minified-shaders)
+else() # Simple dummy copy for other platforms
+	add_custom_command(OUTPUT ${CMAKE_SOURCE_DIR}/src/scenes/City.min.fs
+		DEPENDS ${CMAKE_SOURCE_DIR}/src/scenes/City.fs
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/src/scenes/City.fs ${CMAKE_SOURCE_DIR}/src/scenes/City.min.fs
+	)
 endif()
+add_custom_target(minified-shaders DEPENDS ${CMAKE_SOURCE_DIR}/src/scenes/City.min.fs)
+add_dependencies(${PROJECT_NAME} minified-shaders)

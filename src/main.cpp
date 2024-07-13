@@ -14,10 +14,10 @@ int main() {
 #ifdef NDEBUG
     raylib::Window window(1920, 1080, "Cgull", FLAG_FULLSCREEN_MODE | FLAG_VSYNC_HINT);
     raylib::AudioDevice audioDevice;
-    raylib::Music music(".ogg", (unsigned char*)gmusic_oggData, gmusic_oggSize);
+    raylib::Music music(".ogg", (unsigned char *)gmusic_oggData, gmusic_oggSize);
     HideCursor();
 #else
-    raylib::Window window(960, 540, "Cgull", FLAG_VSYNC_HINT);
+    raylib::Window window(640, 360, "Cgull", FLAG_VSYNC_HINT);
     raylib::AudioDevice audioDevice;
     raylib::Music music("../../assets/music.ogg");
 #endif
@@ -27,11 +27,10 @@ int main() {
 #ifdef NDEBUG
     auto tracks = Rocket::Track::fromData(gsyncdataData, gsyncdataSize);
     rocket.device()->num_tracks = tracks.size();
-	rocket.device()->tracks = (sync_track**)malloc(sizeof(sync_track*) * tracks.size());
-	for (int i = 0; i < rocket.device()->num_tracks; ++i)
-	{
-		rocket.device()->tracks[i] = &tracks[i];
-	}
+    rocket.device()->tracks = (sync_track **)malloc(sizeof(sync_track *) * tracks.size());
+    for (int i = 0; i < rocket.device()->num_tracks; ++i) {
+        rocket.device()->tracks[i] = &tracks[i];
+    }
 #endif
     const auto rocketScene = rocket.track("scene");
 

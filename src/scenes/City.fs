@@ -197,7 +197,7 @@ vec2 SDF(vec3 pos) {
         // Centered seagull facing back
         p = pos - vec3(0, cameraPosition.y + 3, -0.5);
         pR(p.yz, -radians(90.0));
-        pR(p.xz, -radians(180));
+        pR(p.xz, -radians(180.0));
         vec2 sg = seagull(p / 0.5);
         sg.x *= 0.5;
         result = mUnion(result, sg);

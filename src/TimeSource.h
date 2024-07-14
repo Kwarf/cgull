@@ -18,6 +18,10 @@ public:
         }
     }
 
+    void step(double delta) {
+        lastTime += delta;
+    }
+
     double now() const {
         return lastTime;
     }

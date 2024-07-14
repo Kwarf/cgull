@@ -1,3 +1,4 @@
+#include <format>
 #include <iostream>
 #include <memory>
 
@@ -12,7 +13,7 @@ INCBIN(syncdata, "../build/sync.bin");
 
 int main() {
 #ifdef NDEBUG
-    raylib::Window window(1920, 1080, "Cgull", FLAG_FULLSCREEN_MODE | FLAG_VSYNC_HINT);
+    raylib::Window window(1920, 1080, "Cgull");
     raylib::AudioDevice audioDevice;
     raylib::Music music(".ogg", (unsigned char *)gmusic_oggData, gmusic_oggSize);
     HideCursor();
@@ -46,15 +47,14 @@ int main() {
     float windowHeight = GetScreenHeight();
     raylib::RenderTexture renderTexture(RENDER_WIDTH, RENDER_HEIGHT);
 
-    music.Play();
+    int frameNo = 0;
     while (!window.ShouldClose()) {
         if (IsWindowResized()) {
             windowWidth = GetScreenWidth();
             windowHeight = GetScreenHeight();
         }
-        timeSource.tick();
+        timeSource.step(1.0 / 60.0);
         rocket.update();
-        music.Update();
 
         const int sceneIdx = rocketScene.value();
         if (sceneIdx < 0 || sceneIdx >= sizeof(scenes) / sizeof(scenes[0])) {
@@ -75,6 +75,11 @@ int main() {
             {0, 0, static_cast<float>(renderTexture.texture.width), static_cast<float>(-renderTexture.texture.height)},
             {0, 0, windowWidth, windowHeight}, {0, 0}, 0, WHITE);
         EndDrawing();
+
+        // // Save frames
+        raylib::Image frame(renderTexture.texture);
+        frame.FlipVertical();
+        frame.Export(std::format("{:04}.png", frameNo++));
 
         SwapScreenBuffer();
         PollInputEvents();
